@@ -2,48 +2,169 @@
 
 import { useState } from "react";
 
-export default function BookPage() {
-  const [service, setService] = useState("");
-  const [bookingAt, setBookingAt] = useState("");
-  const [address, setAddress] = useState("");
-  const [phone, setPhone] = useState("");
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
-  async function handleSubmit(e: React.FormEvent) {
+export default function BookPage() {
+  const [service, setService] =
+    useState("");
+  const [bookingAt, setBookingAt] =
+    useState("");
+  const [address, setAddress] =
+    useState("");
+  const [phone, setPhone] =
+    useState("");
+
+  async function handlePayment(
+    e: React.FormEvent
+  ) {
     e.preventDefault();
 
-    const res = await fetch("/api/bookings", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        service,
-        bookingAt,
-        address,
-        phone,
-      }),
-    });
+    if (
+      !service ||
+      !bookingAt ||
+      !address ||
+      !phone
+    ) {
+      alert("Please fill all fields.");
+      return;
+    }
 
-    const data = await res.json();
+    try {
+      const orderRes = await fetch(
+        "/api/create-order",
+        {
+          method: "POST",
+        }
+      );
+
+      const order =
+        await orderRes.json();
+
+      const options = {
+        key:
+          process.env
+            .NEXT_PUBLIC_RAZORPAY_KEY_ID,
+
+        amount: order.amount,
+        currency: order.currency,
+        name: "HomeEase",
+        description:
+          "Home Service Booking",
+        order_id: order.id,
+
+        handler: async function (
+          response: any
+        ) {
+          const res =
+            await fetch(
+              "/api/bookings",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+                body: JSON.stringify(
+                  {
+                    service,
+                    bookingAt,
+                    address,
+                    phone,
+                    paymentId:
+                      response.razorpay_payment_id,
+                    paymentStatus:
+                      "PAID",
+                  }
+                ),
+              }
+            );
+
+          const data =
+            await res.json();
+
+          if (res.ok) {
+            alert(
+              "Booking created successfully!"
+            );
+
+            window.location.href =
+              "/bookings";
+          } else {
+            alert(data.error);
+          }
+        },
+
+        prefill: {
+          name: "Customer",
+          contact: phone,
+        },
+
+        theme: {
+          color: "#16a34a",
+        },
+      };
+
+      const paymentObject =
+        new window.Razorpay(
+          options
+        );
+
+      paymentObject.open();
+    } catch (error) {
+      console.log(error);
+      alert(
+        "Failed to start payment."
+      );
+    }
+  }
+
+  async function demoPayment() {
+    const res = await fetch(
+      "/api/bookings",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        body: JSON.stringify({
+          service,
+          bookingAt,
+          address,
+          phone,
+          paymentId:
+            "demo_payment_123",
+          paymentStatus: "PAID",
+        }),
+      }
+    );
+
+    const data =
+      await res.json();
 
     if (res.ok) {
-      alert("Booking created successfully!");
-      setService("");
-      setBookingAt("");
-      setAddress("");
-      setPhone("");
+      alert(
+        "Demo Payment Successful!"
+      );
+
+      window.location.href =
+        "/bookings";
     } else {
       alert(data.error);
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
       <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-md bg-white p-8 rounded-lg shadow"
+        onSubmit={handlePayment}
+        className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg"
       >
-        <h1 className="text-2xl font-bold mb-6">
+        <h1 className="text-3xl font-bold mb-6">
           Book a Service
         </h1>
 
@@ -51,14 +172,22 @@ export default function BookPage() {
           type="text"
           placeholder="Service"
           value={service}
-          onChange={(e) => setService(e.target.value)}
+          onChange={(e) =>
+            setService(
+              e.target.value
+            )
+          }
           className="w-full border p-3 rounded mb-4"
         />
 
         <input
           type="datetime-local"
           value={bookingAt}
-          onChange={(e) => setBookingAt(e.target.value)}
+          onChange={(e) =>
+            setBookingAt(
+              e.target.value
+            )
+          }
           className="w-full border p-3 rounded mb-4"
         />
 
@@ -66,7 +195,11 @@ export default function BookPage() {
           type="text"
           placeholder="Address"
           value={address}
-          onChange={(e) => setAddress(e.target.value)}
+          onChange={(e) =>
+            setAddress(
+              e.target.value
+            )
+          }
           className="w-full border p-3 rounded mb-4"
         />
 
@@ -74,15 +207,27 @@ export default function BookPage() {
           type="text"
           placeholder="Phone Number"
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={(e) =>
+            setPhone(
+              e.target.value
+            )
+          }
           className="w-full border p-3 rounded mb-6"
         />
 
         <button
           type="submit"
-          className="w-full bg-green-600 text-white p-3 rounded"
+          className="w-full bg-green-600 text-white p-3 rounded-lg hover:bg-green-700"
         >
-          Book Service
+          Pay ₹499 & Book Service
+        </button>
+
+        <button
+          type="button"
+          onClick={demoPayment}
+          className="mt-3 w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700"
+        >
+          Demo Payment Success
         </button>
       </form>
     </div>

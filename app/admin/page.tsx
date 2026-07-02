@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import UpdateStatusButton from "@/components/UpdateStatusButton";
+import StatusBadge from "@/components/StatusBadge";
 
 export default async function AdminPage() {
   const session = await auth();
@@ -114,9 +115,12 @@ export default async function AdminPage() {
                 {booking.service}
               </h2>
 
-              <p className="mt-3">
-                👤 {booking.user.name}
-              </p>
+              <p className="mt-3 flex items-center gap-2">
+               Status:
+              <StatusBadge
+              status={booking.status}
+            />
+          </p>
 
               <p className="mt-2">
                 📧 {booking.user.email}

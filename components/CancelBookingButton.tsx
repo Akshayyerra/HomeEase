@@ -11,13 +11,18 @@ export default function CancelBookingButton({
 }) {
   const router = useRouter();
 
+  const normalizedStatus =
+    status.toUpperCase();
+
+  // Don't show button for completed or cancelled bookings
+  if (
+    normalizedStatus === "COMPLETED" ||
+    normalizedStatus === "CANCELLED"
+  ) {
+    return null;
+  }
+
   async function cancelBooking() {
-    const confirmCancel = confirm(
-      "Are you sure you want to cancel this booking?"
-    );
-
-    if (!confirmCancel) return;
-
     const res = await fetch(
       `/api/bookings/${bookingId}`,
       {
@@ -25,28 +30,17 @@ export default function CancelBookingButton({
       }
     );
 
-    const data = await res.json();
-
     if (res.ok) {
-      alert("Booking cancelled successfully!");
       router.refresh();
     } else {
-      alert(data.error);
+      alert("Failed to cancel booking");
     }
-  }
-
-  if (status === "CANCELLED") {
-    return (
-      <p className="mt-4 text-red-600 font-semibold">
-        This booking is cancelled.
-      </p>
-    );
   }
 
   return (
     <button
       onClick={cancelBooking}
-      className="mt-4 bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+      className="mt-4 rounded-lg bg-red-500 px-4 py-2 text-white hover:bg-red-600"
     >
       Cancel Booking
     </button>

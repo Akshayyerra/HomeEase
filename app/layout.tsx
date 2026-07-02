@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import "./globals.css";
-import Providers from "@/components/Providers";
 
 export const metadata: Metadata = {
   title: "HomeEase – Home Services at Your Doorstep",
@@ -16,7 +16,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Providers>{children}</Providers>
+        <Script
+          src="https://checkout.razorpay.com/v1/checkout.js"
+          strategy="beforeInteractive"
+        />
+
+        {children}
       </body>
     </html>
   );

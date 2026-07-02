@@ -13,9 +13,21 @@ export async function POST(req: Request) {
       );
     }
 
-    const { service, bookingAt, address, phone } = await req.json();
+    const {
+      service,
+      bookingAt,
+      address,
+      phone,
+      paymentId,
+      paymentStatus,
+    } = await req.json();
 
-    if (!service || !bookingAt || !address || !phone) {
+    if (
+      !service ||
+      !bookingAt ||
+      !address ||
+      !phone
+    ) {
       return NextResponse.json(
         { error: "All fields are required" },
         { status: 400 }
@@ -35,19 +47,25 @@ export async function POST(req: Request) {
       );
     }
 
-    const booking = await prisma.booking.create({
-      data: {
-        service,
-        bookingAt: new Date(bookingAt),
-        address,
-        phone,
-        userId: user.id,
-      },
-    });
+    const booking =
+      await prisma.booking.create({
+        data: {
+          service,
+          bookingAt: new Date(
+            bookingAt
+          ),
+          address,
+          phone,
+          userId: user.id,
+          paymentId,
+          paymentStatus,
+        },
+      });
 
     return NextResponse.json(
       {
-        message: "Booking created successfully",
+        message:
+          "Booking created successfully",
         booking,
       },
       { status: 201 }
@@ -56,7 +74,10 @@ export async function POST(req: Request) {
     console.error(error);
 
     return NextResponse.json(
-      { error: "Something went wrong" },
+      {
+        error:
+          "Something went wrong",
+      },
       { status: 500 }
     );
   }
