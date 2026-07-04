@@ -2,17 +2,18 @@
 
 import { useRouter } from "next/navigation";
 
+interface Props {
+  bookingId: string;
+  status: string;
+  label?: string;
+}
+
 export default function UpdateStatusButton({
   bookingId,
   status,
-}: {
-  bookingId: string;
-  status: string;
-}) {
+  label,
+}: Props) {
   const router = useRouter();
-
-  const normalizedStatus =
-    status.toUpperCase();
 
   async function updateStatus(
     newStatus: string
@@ -33,39 +34,44 @@ export default function UpdateStatusButton({
 
     if (res.ok) {
       router.refresh();
-    } else {
-      const data = await res.json();
-      alert(
-        data.error ||
-          "Failed to update booking"
-      );
     }
   }
 
-  if (normalizedStatus === "PENDING") {
+  if (status === "PENDING") {
     return (
       <button
         onClick={() =>
           updateStatus("CONFIRMED")
         }
-        className="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+        className="rounded bg-green-600 px-4 py-2 text-white"
       >
-        Confirm Booking
+        {label || "Confirm Booking"}
       </button>
     );
   }
 
-  if (
-    normalizedStatus === "CONFIRMED"
-  ) {
+  if (status === "CONFIRMED") {
+    return (
+      <button
+        onClick={() =>
+          updateStatus("IN_PROGRESS")
+        }
+        className="rounded bg-yellow-500 px-4 py-2 text-white"
+      >
+        {label || "Accept Job"}
+      </button>
+    );
+  }
+
+  if (status === "IN_PROGRESS") {
     return (
       <button
         onClick={() =>
           updateStatus("COMPLETED")
         }
-        className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+        className="rounded bg-blue-600 px-4 py-2 text-white"
       >
-        Complete Booking
+        {label || "Complete Service"}
       </button>
     );
   }

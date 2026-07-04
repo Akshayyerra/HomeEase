@@ -8,8 +8,12 @@ export async function POST(req: Request) {
 
     if (!session?.user?.email) {
       return NextResponse.json(
-        { error: "Please login first" },
-        { status: 401 }
+        {
+          error: "Please login first",
+        },
+        {
+          status: 401,
+        }
       );
     }
 
@@ -18,6 +22,8 @@ export async function POST(req: Request) {
       bookingAt,
       address,
       phone,
+      latitude,
+      longitude,
       paymentId,
       paymentStatus,
     } = await req.json();
@@ -29,21 +35,33 @@ export async function POST(req: Request) {
       !phone
     ) {
       return NextResponse.json(
-        { error: "All fields are required" },
-        { status: 400 }
+        {
+          error:
+            "All fields are required",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
-    const user = await prisma.user.findUnique({
-      where: {
-        email: session.user.email,
-      },
-    });
+    const user =
+      await prisma.user.findUnique({
+        where: {
+          email:
+            session.user.email,
+        },
+      });
 
     if (!user) {
       return NextResponse.json(
-        { error: "User not found" },
-        { status: 404 }
+        {
+          error:
+            "User not found",
+        },
+        {
+          status: 404,
+        }
       );
     }
 
@@ -51,14 +69,28 @@ export async function POST(req: Request) {
       await prisma.booking.create({
         data: {
           service,
-          bookingAt: new Date(
-            bookingAt
-          ),
+          bookingAt:
+            new Date(
+              bookingAt
+            ),
           address,
           phone,
+
+          latitude:
+            latitude ?? null,
+
+          longitude:
+            longitude ?? null,
+
+          paymentId:
+            paymentId ??
+            null,
+
+          paymentStatus:
+            paymentStatus ??
+            "PENDING",
+
           userId: user.id,
-          paymentId,
-          paymentStatus,
         },
       });
 
@@ -68,7 +100,9 @@ export async function POST(req: Request) {
           "Booking created successfully",
         booking,
       },
-      { status: 201 }
+      {
+        status: 201,
+      }
     );
   } catch (error) {
     console.error(error);
@@ -78,7 +112,9 @@ export async function POST(req: Request) {
         error:
           "Something went wrong",
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }

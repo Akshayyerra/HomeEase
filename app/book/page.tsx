@@ -2,127 +2,46 @@
 
 import { useState } from "react";
 
-declare global {
-  interface Window {
-    Razorpay: any;
-  }
-}
-
 export default function BookPage() {
-  const [service, setService] =
-    useState("");
-  const [bookingAt, setBookingAt] =
-    useState("");
-  const [address, setAddress] =
-    useState("");
-  const [phone, setPhone] =
-    useState("");
+  const [service, setService] = useState("");
+  const [bookingAt, setBookingAt] = useState("");
+  const [address, setAddress] = useState("");
+  const [phone, setPhone] = useState("");
 
-  async function handlePayment(
+  const [latitude, setLatitude] =
+    useState<number | null>(null);
+
+  const [longitude, setLongitude] =
+    useState<number | null>(null);
+
+  function getLocation() {
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLatitude(
+          position.coords.latitude
+        );
+
+        setLongitude(
+          position.coords.longitude
+        );
+
+        alert(
+          "Location captured successfully!"
+        );
+      },
+      () => {
+        alert(
+          "Please allow location access."
+        );
+      }
+    );
+  }
+
+  async function handleSubmit(
     e: React.FormEvent
   ) {
     e.preventDefault();
 
-    if (
-      !service ||
-      !bookingAt ||
-      !address ||
-      !phone
-    ) {
-      alert("Please fill all fields.");
-      return;
-    }
-
-    try {
-      const orderRes = await fetch(
-        "/api/create-order",
-        {
-          method: "POST",
-        }
-      );
-
-      const order =
-        await orderRes.json();
-
-      const options = {
-        key:
-          process.env
-            .NEXT_PUBLIC_RAZORPAY_KEY_ID,
-
-        amount: order.amount,
-        currency: order.currency,
-        name: "HomeEase",
-        description:
-          "Home Service Booking",
-        order_id: order.id,
-
-        handler: async function (
-          response: any
-        ) {
-          const res =
-            await fetch(
-              "/api/bookings",
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type":
-                    "application/json",
-                },
-                body: JSON.stringify(
-                  {
-                    service,
-                    bookingAt,
-                    address,
-                    phone,
-                    paymentId:
-                      response.razorpay_payment_id,
-                    paymentStatus:
-                      "PAID",
-                  }
-                ),
-              }
-            );
-
-          const data =
-            await res.json();
-
-          if (res.ok) {
-            alert(
-              "Booking created successfully!"
-            );
-
-            window.location.href =
-              "/bookings";
-          } else {
-            alert(data.error);
-          }
-        },
-
-        prefill: {
-          name: "Customer",
-          contact: phone,
-        },
-
-        theme: {
-          color: "#16a34a",
-        },
-      };
-
-      const paymentObject =
-        new window.Razorpay(
-          options
-        );
-
-      paymentObject.open();
-    } catch (error) {
-      console.log(error);
-      alert(
-        "Failed to start payment."
-      );
-    }
-  }
-
-  async function demoPayment() {
     const res = await fetch(
       "/api/bookings",
       {
@@ -136,35 +55,37 @@ export default function BookPage() {
           bookingAt,
           address,
           phone,
-          paymentId:
-            "demo_payment_123",
-          paymentStatus: "PAID",
+          latitude,
+          longitude,
         }),
       }
     );
 
-    const data =
-      await res.json();
+    const data = await res.json();
 
     if (res.ok) {
       alert(
-        "Demo Payment Successful!"
+        "Booking created successfully!"
       );
 
-      window.location.href =
-        "/bookings";
+      setService("");
+      setBookingAt("");
+      setAddress("");
+      setPhone("");
+      setLatitude(null);
+      setLongitude(null);
     } else {
       alert(data.error);
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <form
-        onSubmit={handlePayment}
-        className="w-full max-w-md bg-white p-8 rounded-xl shadow-lg"
+        onSubmit={handleSubmit}
+        className="w-full max-w-md rounded-lg bg-white p-8 shadow"
       >
-        <h1 className="text-3xl font-bold mb-6">
+        <h1 className="mb-6 text-3xl font-bold">
           Book a Service
         </h1>
 
@@ -173,11 +94,9 @@ export default function BookPage() {
           placeholder="Service"
           value={service}
           onChange={(e) =>
-            setService(
-              e.target.value
-            )
+            setService(e.target.value)
           }
-          className="w-full border p-3 rounded mb-4"
+          className="mb-4 w-full rounded border p-3"
         />
 
         <input
@@ -188,7 +107,7 @@ export default function BookPage() {
               e.target.value
             )
           }
-          className="w-full border p-3 rounded mb-4"
+          className="mb-4 w-full rounded border p-3"
         />
 
         <input
@@ -200,7 +119,7 @@ export default function BookPage() {
               e.target.value
             )
           }
-          className="w-full border p-3 rounded mb-4"
+          className="mb-4 w-full rounded border p-3"
         />
 
         <input
@@ -212,22 +131,29 @@ export default function BookPage() {
               e.target.value
             )
           }
-          className="w-full border p-3 rounded mb-6"
+          className="mb-4 w-full rounded border p-3"
         />
 
         <button
-          type="submit"
-          className="w-full bg-green-600 text-white p-3 rounded-lg hover:bg-green-700"
+          type="button"
+          onClick={getLocation}
+          className="mb-4 w-full rounded bg-blue-600 p-3 text-white"
         >
-          Pay ₹499 & Book Service
+          📍 Use Current Location
         </button>
 
+        {latitude &&
+          longitude && (
+            <p className="mb-4 text-sm text-green-600">
+              Location captured ✅
+            </p>
+          )}
+
         <button
-          type="button"
-          onClick={demoPayment}
-          className="mt-3 w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700"
+          type="submit"
+          className="w-full rounded bg-green-600 p-3 text-white"
         >
-          Demo Payment Success
+          Book Service
         </button>
       </form>
     </div>

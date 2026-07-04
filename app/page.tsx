@@ -12,7 +12,6 @@ import PayButton from "@/components/PayButton";
 export default function Home() {
   return (
     <main className="min-h-screen">
-      <Navbar />
       <Hero />
       <div className="flex justify-center py-8">
       <PayButton />

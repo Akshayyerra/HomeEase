@@ -1,24 +1,33 @@
-import type { Metadata } from "next";
-import Script from "next/script";
 import "./globals.css";
+import Navbar from "@/components/Navbar";
+import { auth } from "@/auth";
+import prisma from "@/lib/prisma";
 
-export const metadata: Metadata = {
-  title: "HomeEase – Home Services at Your Doorstep",
-  description:
-    "Book trusted professionals for home cleaning, plumbing, electrician, beauty & salon, and AC repair. Same-day booking available.",
-};
-
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await auth();
+
+  let role = "";
+
+  if (session?.user?.email) {
+    const user = await prisma.user.findUnique({
+      where: {
+        email: session.user.email,
+      },
+    });
+
+    role = user?.role || "";
+  }
+
   return (
     <html lang="en">
       <body>
-        <Script
-          src="https://checkout.razorpay.com/v1/checkout.js"
-          strategy="beforeInteractive"
+        <Navbar
+          role={role}
+          isLoggedIn={!!session}
         />
 
         {children}

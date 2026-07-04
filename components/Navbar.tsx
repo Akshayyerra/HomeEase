@@ -1,30 +1,102 @@
-import Link from "next/link";
-import NavLinks from "./NavLinks";
+"use client";
 
-export default function Navbar() {
+import Link from "next/link";
+import { signOut } from "next-auth/react";
+
+interface NavbarProps {
+  role?: string;
+  isLoggedIn: boolean;
+}
+
+export default function Navbar({
+  role,
+  isLoggedIn,
+}: NavbarProps) {
   return (
-    <header className="sticky top-0 z-50 bg-white shadow-md border-b">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
+    <nav className="sticky top-0 z-50 bg-white shadow-md">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-8 py-4">
+        {/* Logo */}
+        <Link
+          href="/"
+          className="text-3xl font-bold"
+        >
+          Home
+          <span className="text-green-600">
+            Ease
+          </span>
+        </Link>
+
+        {/* Menu */}
+        <div className="flex items-center gap-8 text-lg font-medium">
           <Link
             href="/"
-            className="text-3xl font-bold"
+            className="hover:text-green-600 transition"
           >
-            <span className="text-black">
-              Home
-            </span>
-            <span className="text-green-600">
-              Ease
-            </span>
+            Home
           </Link>
 
-          {/* Navigation */}
-          <nav>
-            <NavLinks />
-          </nav>
+          {isLoggedIn && (
+            <>
+              <Link
+                href="/book"
+                className="hover:text-green-600 transition"
+              >
+                Book Service
+              </Link>
+
+              <Link
+                href="/bookings"
+                className="hover:text-green-600 transition"
+              >
+                My Bookings
+              </Link>
+            </>
+          )}
+
+          {role === "PROVIDER" && (
+            <Link
+              href="/worker"
+              className="hover:text-green-600 transition"
+            >
+              Worker
+            </Link>
+          )}
+
+          {role === "ADMIN" && (
+            <Link
+              href="/admin"
+              className="hover:text-green-600 transition"
+            >
+              Admin
+            </Link>
+          )}
+
+          {!isLoggedIn ? (
+            <>
+              <Link
+                href="/login"
+                className="hover:text-green-600 transition"
+              >
+                Login
+              </Link>
+
+              <Link
+                href="/register"
+                className="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700 transition"
+              >
+                Register
+              </Link>
+            </>
+          ) : (
+            <button
+              onClick={() => signOut()}
+              className="rounded-lg bg-red-500 px-4 py-2 text-white hover:bg-red-600 transition"
+            >
+              Logout
+            </button>
+          )}
         </div>
       </div>
-    </header>
+    </nav>
   );
 }
