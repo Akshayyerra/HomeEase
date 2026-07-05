@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import UpdateStatusButton from "@/components/UpdateStatusButton";
+import WorkerLocationTracker from "@/components/WorkerLocationTracker";
 
 export default async function WorkerPage() {
   const session = await auth();
@@ -34,12 +35,12 @@ export default async function WorkerPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
-      <h1 className="mb-8 text-5xl font-bold">
+      <h1 className="mb-8 text-4xl font-bold">
         Worker Dashboard
       </h1>
 
       {bookings.length === 0 ? (
-        <div className="rounded-2xl bg-white p-8 shadow">
+        <div className="rounded-xl bg-white p-8 shadow">
           <h2 className="text-2xl font-semibold">
             No assigned jobs.
           </h2>
@@ -49,8 +50,12 @@ export default async function WorkerPage() {
           {bookings.map((booking) => (
             <div
               key={booking.id}
-              className="rounded-3xl bg-white p-8 shadow-lg"
+              className="rounded-2xl bg-white p-8 shadow"
             >
+              <WorkerLocationTracker
+                bookingId={booking.id}
+              />
+
               <h2 className="text-3xl font-bold capitalize">
                 🔧 {booking.service}
               </h2>
@@ -65,10 +70,7 @@ export default async function WorkerPage() {
                 </p>
 
                 <p>
-                  📅{" "}
-                  {new Date(
-                    booking.bookingAt
-                  ).toLocaleString()}
+                  📞 {booking.phone}
                 </p>
 
                 <p>
@@ -76,7 +78,10 @@ export default async function WorkerPage() {
                 </p>
 
                 <p>
-                  📞 {booking.phone}
+                  📅{" "}
+                  {new Date(
+                    booking.bookingAt
+                  ).toLocaleString()}
                 </p>
 
                 <p>
@@ -85,29 +90,12 @@ export default async function WorkerPage() {
                     {booking.status}
                   </span>
                 </p>
-
-                {booking.paymentStatus && (
-                  <p>
-                    💳 Payment:{" "}
-                    <span className="font-bold text-green-600">
-                      {booking.paymentStatus}
-                    </span>
-                  </p>
-                )}
-
-                {booking.paymentId && (
-                  <p>
-                    🧾 Payment ID:{" "}
-                    {booking.paymentId}
-                  </p>
-                )}
               </div>
 
-              {/* Action Buttons */}
               <div className="mt-6 flex flex-wrap gap-3">
                 <a
                   href={`tel:${booking.phone}`}
-                  className="rounded-lg bg-green-600 px-5 py-3 text-white hover:bg-green-700"
+                  className="rounded-lg bg-green-600 px-5 py-3 text-white"
                 >
                   📞 Call Customer
                 </a>
@@ -115,8 +103,7 @@ export default async function WorkerPage() {
                 <a
                   href={`https://wa.me/91${booking.phone}`}
                   target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-lg bg-green-500 px-5 py-3 text-white hover:bg-green-600"
+                  className="rounded-lg bg-green-500 px-5 py-3 text-white"
                 >
                   💬 WhatsApp
                 </a>
@@ -126,8 +113,7 @@ export default async function WorkerPage() {
                   <a
                     href={`https://www.google.com/maps/dir/?api=1&destination=${booking.latitude},${booking.longitude}&travelmode=driving`}
                     target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-lg bg-blue-600 px-5 py-3 text-white hover:bg-blue-700"
+                    className="rounded-lg bg-blue-600 px-5 py-3 text-white"
                   >
                     🗺 Navigate
                   </a>
@@ -137,15 +123,13 @@ export default async function WorkerPage() {
                       booking.address
                     )}`}
                     target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-lg bg-blue-600 px-5 py-3 text-white hover:bg-blue-700"
+                    className="rounded-lg bg-blue-600 px-5 py-3 text-white"
                   >
                     🗺 Navigate
                   </a>
                 )}
               </div>
 
-              {/* Status Buttons */}
               <div className="mt-6">
                 {booking.status ===
                   "CONFIRMED" && (
@@ -170,23 +154,30 @@ export default async function WorkerPage() {
                 )}
               </div>
 
-              {/* Debug (remove later) */}
               <div className="mt-4 text-sm text-gray-500">
                 <p>
-                  Latitude:{" "}
+                  Customer Latitude:{" "}
                   {booking.latitude ??
-                    "Not Available"}
+                    "N/A"}
                 </p>
 
                 <p>
-                  Longitude:{" "}
+                  Customer Longitude:{" "}
                   {booking.longitude ??
-                    "Not Available"}
+                    "N/A"}
                 </p>
-              </div>
 
-              <div className="mt-4 text-sm text-gray-400">
-                Booking ID: {booking.id}
+                <p>
+                  Worker Latitude:{" "}
+                  {booking.workerLatitude ??
+                    "N/A"}
+                </p>
+
+                <p>
+                  Worker Longitude:{" "}
+                  {booking.workerLongitude ??
+                    "N/A"}
+                </p>
               </div>
             </div>
           ))}

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import StatusBadge from "@/components/StatusBadge";
 import CancelBookingButton from "@/components/CancelBookingButton";
+import Link from "next/link";
 
 export default async function BookingsPage() {
   const session = await auth();
@@ -171,6 +172,19 @@ export default async function BookingsPage() {
                     booking.createdAt
                   ).toLocaleDateString()}
                 </div>
+                {/* Track Worker Button */}
+                {booking.workerId &&
+                booking.status !== "PENDING" &&
+                booking.status !== "CANCELLED" && (
+                <div className="mt-6">
+                <Link
+                href={`/track/${booking.id}`}
+                className="inline-block rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
+                >
+              📍 Track Worker
+            </Link>
+            </div>
+            )}
 
                 {/* Cancel Button */}
                 {booking.status !==
