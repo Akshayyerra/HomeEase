@@ -1,10 +1,9 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
-  "/book/page": "app/book/page.js",
-  "/admin/page": "app/admin/page.js",
   "/page": "app/page.js",
-  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
+  "/dashboard/page": "app/dashboard/page.js",
   "/login/page": "app/login/page.js",
-  "/bookings/page": "app/bookings/page.js",
-  "/track/[bookingId]/page": "app/track/[bookingId]/page.js"
+  "/admin/page": "app/admin/page.js",
+  "/worker/page": "app/worker/page.js",
+  "/phone-login/page": "app/phone-login/page.js"
 }

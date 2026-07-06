@@ -8,17 +8,18 @@ datasource db {
 }
 
 model User {
-  id       String @id @default(cuid())
+  id       String  @id @default(cuid())
   name     String
-  email    String @unique
-  password String
+  email    String? @unique
+  phone    String? @unique
+  password String?
 
   role Role @default(CUSTOMER)
 
   // Bookings created by customer
   bookings Booking[] @relation("CustomerBookings")
 
-  // Bookings assigned to worker/provider
+  // Bookings assigned to worker
   assignedBookings Booking[] @relation("AssignedWorker")
 
   createdAt DateTime @default(now())
@@ -34,23 +35,18 @@ model Booking {
 
   status String @default("PENDING")
 
-  // Payment
   paymentId     String?
   paymentStatus String? @default("PENDING")
 
-  // Customer exact location
   latitude  Float?
   longitude Float?
 
-  // Live worker location
   workerLatitude  Float?
   workerLongitude Float?
 
-  // Customer
   userId String
   user   User   @relation("CustomerBookings", fields: [userId], references: [id])
 
-  // Assigned Worker
   workerId String?
   worker   User?   @relation("AssignedWorker", fields: [workerId], references: [id])
 
