@@ -13,9 +13,6 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       <Hero />
-      <div className="flex justify-center py-8">
-      <PayButton />
-</div>
       <Services />
       <HowItWorks />
       <Stats />

@@ -4,6 +4,7 @@ import prisma from "@/lib/prisma";
 import StatusBadge from "@/components/StatusBadge";
 import CancelBookingButton from "@/components/CancelBookingButton";
 import PayButton from "@/components/PayButton";
+import { Booking } from "@prisma/client";
 
 export default async function BookingsPage() {
   const session = await auth();
@@ -22,7 +23,7 @@ export default async function BookingsPage() {
     redirect("/login");
   }
 
-  const bookings = await prisma.booking.findMany({
+  const bookings: Booking[] = await prisma.booking.findMany({
     where: {
       userId: user.id,
     },
@@ -32,15 +33,12 @@ export default async function BookingsPage() {
   });
 
   const paidBookings = bookings.filter(
-    (booking) =>
-      booking.paymentStatus === "PAID"
+    (booking: Booking) => booking.paymentStatus === "PAID"
   ).length;
 
-  const completedBookings =
-    bookings.filter(
-      (booking) =>
-        booking.status === "COMPLETED"
-    ).length;
+  const completedBookings = bookings.filter(
+    (booking: Booking) => booking.status === "COMPLETED"
+  ).length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 p-8">
@@ -51,9 +49,7 @@ export default async function BookingsPage() {
 
         <div className="mb-10 grid gap-6 md:grid-cols-3">
           <div className="rounded-2xl bg-white p-5 shadow">
-            <p className="text-gray-500">
-              📋 Total Bookings
-            </p>
+            <p className="text-gray-500">📋 Total Bookings</p>
 
             <h2 className="mt-2 text-5xl font-bold">
               {bookings.length}
@@ -61,9 +57,7 @@ export default async function BookingsPage() {
           </div>
 
           <div className="rounded-2xl bg-white p-5 shadow">
-            <p className="text-gray-500">
-              💳 Paid Bookings
-            </p>
+            <p className="text-gray-500">💳 Paid Bookings</p>
 
             <h2 className="mt-2 text-5xl font-bold text-green-600">
               {paidBookings}
@@ -93,7 +87,7 @@ export default async function BookingsPage() {
           </div>
         ) : (
           <div className="mx-auto max-w-3xl space-y-8">
-            {bookings.map((booking) => (
+            {bookings.map((booking: Booking) => (
               <div
                 key={booking.id}
                 className="rounded-3xl bg-white p-8 shadow-lg"
@@ -116,13 +110,9 @@ export default async function BookingsPage() {
                     ).toLocaleString()}
                   </p>
 
-                  <p>
-                    📍 {booking.address}
-                  </p>
+                  <p>📍 {booking.address}</p>
 
-                  <p>
-                    📞 {booking.phone}
-                  </p>
+                  <p>📞 {booking.phone}</p>
                 </div>
 
                 <div className="mt-8 flex items-center gap-3">
@@ -135,8 +125,7 @@ export default async function BookingsPage() {
                   />
                 </div>
 
-                {booking.paymentStatus ===
-                "PAID" ? (
+                {booking.paymentStatus === "PAID" ? (
                   <div className="mt-5 flex items-center gap-3">
                     <span className="font-semibold text-lg">
                       💳 Payment:
@@ -170,19 +159,12 @@ export default async function BookingsPage() {
                   </div>
                 )}
 
-                {/* Razorpay Button */}
-                {booking.status ===
-                  "CONFIRMED" &&
-                  booking.paymentStatus !==
-                    "PAID" && (
+                {booking.status === "CONFIRMED" &&
+                  booking.paymentStatus !== "PAID" && (
                     <div className="mt-6">
                       <PayButton
-                        bookingId={
-                          booking.id
-                        }
-                        service={
-                          booking.service
-                        }
+                        bookingId={booking.id}
+                        service={booking.service}
                       />
                     </div>
                   )}
@@ -194,18 +176,12 @@ export default async function BookingsPage() {
                   ).toLocaleDateString()}
                 </div>
 
-                {booking.status !==
-                  "COMPLETED" &&
-                  booking.status !==
-                    "CANCELLED" && (
+                {booking.status !== "COMPLETED" &&
+                  booking.status !== "CANCELLED" && (
                     <div className="mt-8">
                       <CancelBookingButton
-                        bookingId={
-                          booking.id
-                        }
-                        status={
-                          booking.status
-                        }
+                        bookingId={booking.id}
+                        status={booking.status}
                       />
                     </div>
                   )}
