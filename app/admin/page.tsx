@@ -3,6 +3,15 @@ import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import AssignWorker from "@/components/AssignWorker";
 import UpdateStatusButton from "@/components/UpdateStatusButton";
+import { Prisma } from "@prisma/client";
+
+type BookingWithRelations =
+  Prisma.BookingGetPayload<{
+    include: {
+      user: true;
+      worker: true;
+    };
+  }>;
 
 export default async function AdminPage() {
   const session = await auth();
@@ -16,9 +25,6 @@ export default async function AdminPage() {
       email: session.user.email,
     },
   });
-
-  console.log("Session Email:", session.user.email);
-  console.log("Admin User:", admin);
 
   if (!admin) {
     redirect("/login");
@@ -58,87 +64,95 @@ export default async function AdminPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {bookings.map((booking) => (
-            <div
-              key={booking.id}
-              className="rounded-2xl bg-white p-8 shadow-lg"
-            >
-              <h2 className="text-2xl font-bold capitalize">
-                🔧 {booking.service}
-              </h2>
+          {bookings.map(
+            (booking: BookingWithRelations) => (
+              <div
+                key={booking.id}
+                className="rounded-2xl bg-white p-8 shadow-lg"
+              >
+                <h2 className="text-2xl font-bold capitalize">
+                  🔧 {booking.service}
+                </h2>
 
-              <div className="mt-5 space-y-2">
-                <p>
-                  👤 {booking.user.name}
-                </p>
-
-                <p>
-                  📧 {booking.user.email}
-                </p>
-
-                <p>
-                  📅{" "}
-                  {new Date(
-                    booking.bookingAt
-                  ).toLocaleString()}
-                </p>
-
-                <p>
-                  📍 {booking.address}
-                </p>
-
-                <p>
-                  📞 {booking.phone}
-                </p>
-
-                <p>
-                  Status:{" "}
-                  <span className="font-semibold">
-                    {booking.status}
-                  </span>
-                </p>
-
-                {booking.paymentStatus && (
+                <div className="mt-5 space-y-2">
                   <p>
-                    💳 Payment Status:{" "}
-                    <span className="font-semibold text-green-600">
-                      {booking.paymentStatus}
+                    👤{" "}
+                    {booking.user?.name ??
+                      "No Name"}
+                  </p>
+
+                  <p>
+                    📧{" "}
+                    {booking.user?.email ??
+                      "No Email"}
+                  </p>
+
+                  <p>
+                    📅{" "}
+                    {new Date(
+                      booking.bookingAt
+                    ).toLocaleString()}
+                  </p>
+
+                  <p>
+                    📍 {booking.address}
+                  </p>
+
+                  <p>
+                    📞 {booking.phone}
+                  </p>
+
+                  <p>
+                    Status:{" "}
+                    <span className="font-semibold">
+                      {booking.status}
                     </span>
                   </p>
-                )}
 
-                {booking.paymentId && (
-                  <p>
-                    🧾 Transaction ID:{" "}
-                    {booking.paymentId}
-                  </p>
-                )}
-              </div>
+                  {booking.paymentStatus && (
+                    <p>
+                      💳 Payment Status:{" "}
+                      <span className="font-semibold text-green-600">
+                        {
+                          booking.paymentStatus
+                        }
+                      </span>
+                    </p>
+                  )}
 
-              {/* Worker Assignment */}
-              <div className="mt-6">
-                {booking.worker ? (
-                  <p className="font-semibold text-green-600">
-                    👷 Assigned to:{" "}
-                    {booking.worker.name}
-                  </p>
-                ) : (
-                  <AssignWorker
+                  {booking.paymentId && (
+                    <p>
+                      🧾 Transaction ID:{" "}
+                      {booking.paymentId}
+                    </p>
+                  )}
+                </div>
+
+                <div className="mt-6">
+                  {booking.worker ? (
+                    <p className="font-semibold text-green-600">
+                      👷 Assigned to:{" "}
+                      {booking.worker.name}
+                    </p>
+                  ) : (
+                    <AssignWorker
+                      bookingId={booking.id}
+                      workers={workers}
+                    />
+                  )}
+                </div>
+
+                <div className="mt-6">
+                  <UpdateStatusButton
                     bookingId={booking.id}
-                    workers={workers}
+                    status={
+                      booking.status
+                    }
                   />
-                )}
+                </div>
               </div>
-
-              {/* Status Update */}
-              <div className="mt-6">
-                <UpdateStatusButton
-                  bookingId={booking.id}
-                  status={booking.status}
-                />
-              </div>
-            </div>
-          ))}
+            )
+          )}
         </div>
       )}
     </div>
