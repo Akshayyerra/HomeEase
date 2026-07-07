@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import StatusBadge from "@/components/StatusBadge";
 import CancelBookingButton from "@/components/CancelBookingButton";
-import Link from "next/link";
+import PayButton from "@/components/PayButton";
 
 export default async function BookingsPage() {
   const session = await auth();
@@ -49,9 +49,8 @@ export default async function BookingsPage() {
           My Bookings
         </h1>
 
-        {/* Statistics */}
         <div className="mb-10 grid gap-6 md:grid-cols-3">
-          <div className="rounded-2xl bg-white p-5 shadow hover:shadow-lg transition">
+          <div className="rounded-2xl bg-white p-5 shadow">
             <p className="text-gray-500">
               📋 Total Bookings
             </p>
@@ -61,7 +60,7 @@ export default async function BookingsPage() {
             </h2>
           </div>
 
-          <div className="rounded-2xl bg-white p-5 shadow hover:shadow-lg transition">
+          <div className="rounded-2xl bg-white p-5 shadow">
             <p className="text-gray-500">
               💳 Paid Bookings
             </p>
@@ -71,7 +70,7 @@ export default async function BookingsPage() {
             </h2>
           </div>
 
-          <div className="rounded-2xl bg-white p-5 shadow hover:shadow-lg transition">
+          <div className="rounded-2xl bg-white p-5 shadow">
             <p className="text-gray-500">
               ✅ Completed Services
             </p>
@@ -97,9 +96,8 @@ export default async function BookingsPage() {
             {bookings.map((booking) => (
               <div
                 key={booking.id}
-                className="rounded-3xl bg-white p-8 shadow-lg transition hover:shadow-2xl"
+                className="rounded-3xl bg-white p-8 shadow-lg"
               >
-                {/* Header */}
                 <div className="flex items-center justify-between">
                   <h2 className="text-4xl font-bold capitalize">
                     🔧 {booking.service}
@@ -110,7 +108,6 @@ export default async function BookingsPage() {
                   </span>
                 </div>
 
-                {/* Booking Details */}
                 <div className="mt-8 space-y-4 text-lg">
                   <p>
                     📅{" "}
@@ -128,7 +125,6 @@ export default async function BookingsPage() {
                   </p>
                 </div>
 
-                {/* Status */}
                 <div className="mt-8 flex items-center gap-3">
                   <span className="font-semibold text-lg">
                     Status:
@@ -139,8 +135,8 @@ export default async function BookingsPage() {
                   />
                 </div>
 
-                {/* Payment */}
-                {booking.paymentStatus && (
+                {booking.paymentStatus ===
+                "PAID" ? (
                   <div className="mt-5 flex items-center gap-3">
                     <span className="font-semibold text-lg">
                       💳 Payment:
@@ -150,9 +146,18 @@ export default async function BookingsPage() {
                       ✔ Paid
                     </span>
                   </div>
+                ) : (
+                  <div className="mt-5 flex items-center gap-3">
+                    <span className="font-semibold text-lg">
+                      💳 Payment:
+                    </span>
+
+                    <span className="rounded-full bg-yellow-100 px-4 py-2 font-bold text-yellow-700">
+                      Pending
+                    </span>
+                  </div>
                 )}
 
-                {/* Transaction ID */}
                 {booking.paymentId && (
                   <div className="mt-6 rounded-2xl bg-gray-50 p-5">
                     <p className="text-sm text-gray-500">
@@ -165,28 +170,30 @@ export default async function BookingsPage() {
                   </div>
                 )}
 
-                {/* Timeline */}
+                {/* Razorpay Button */}
+                {booking.status ===
+                  "CONFIRMED" &&
+                  booking.paymentStatus !==
+                    "PAID" && (
+                    <div className="mt-6">
+                      <PayButton
+                        bookingId={
+                          booking.id
+                        }
+                        service={
+                          booking.service
+                        }
+                      />
+                    </div>
+                  )}
+
                 <div className="mt-5 text-sm text-gray-500">
                   Booking created on{" "}
                   {new Date(
                     booking.createdAt
                   ).toLocaleDateString()}
                 </div>
-                {/* Track Worker Button */}
-                {booking.workerId &&
-                booking.status !== "PENDING" &&
-                booking.status !== "CANCELLED" && (
-                <div className="mt-6">
-                <Link
-                href={`/track/${booking.id}`}
-                className="inline-block rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white transition hover:bg-blue-700"
-                >
-              📍 Track Worker
-            </Link>
-            </div>
-            )}
 
-                {/* Cancel Button */}
                 {booking.status !==
                   "COMPLETED" &&
                   booking.status !==

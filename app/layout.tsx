@@ -2,6 +2,7 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
+import Script from "next/script";
 
 export default async function RootLayout({
   children,
@@ -29,8 +30,8 @@ export default async function RootLayout({
           role={role}
           isLoggedIn={!!session}
         />
-
         {children}
+        <Script src="https://checkout.razorpay.com/v1/checkout.js" />
       </body>
     </html>
   );

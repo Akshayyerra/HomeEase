@@ -1,57 +1,100 @@
 "use client";
 
+import { getServicePrice } from "@/lib/servicePrices";
+
 declare global {
   interface Window {
     Razorpay: any;
   }
 }
 
-export default function PayButton() {
+export default function PayButton({
+  bookingId,
+  service,
+}: {
+  bookingId: string;
+  service: string;
+}) {
   async function handlePayment() {
     try {
+      const amount =
+        getServicePrice(service);
+
       const res = await fetch(
-        "/api/create-order",
+        "/api/payment/create-order",
         {
           method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            amount,
+          }),
         }
       );
 
-      const order = await res.json();
+      const order =
+        await res.json();
 
       const options = {
         key:
           process.env
             .NEXT_PUBLIC_RAZORPAY_KEY_ID,
+
         amount: order.amount,
-        currency: order.currency,
+        currency:
+          order.currency,
+
         name: "HomeEase",
-        description:
-          "Home Service Booking",
+
+        description: `${service} Service`,
+
         order_id: order.id,
 
-        handler: function (
-          response: any
-        ) {
-          alert(
-            `Payment Successful!\nPayment ID: ${response.razorpay_payment_id}`
-          );
-        },
+        handler:
+          async function (
+            response: any
+          ) {
+            await fetch(
+              `/api/bookings/${bookingId}/payment`,
+              {
+                method:
+                  "PATCH",
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+                body: JSON.stringify({
+                  paymentId:
+                    response.razorpay_payment_id,
+                }),
+              }
+            );
+
+            alert(
+              "Payment Successful"
+            );
+
+            window.location.reload();
+          },
 
         theme: {
           color: "#16a34a",
         },
       };
 
-      const paymentObject =
+      const razorpay =
         new window.Razorpay(
           options
         );
 
-      paymentObject.open();
+      razorpay.open();
     } catch (error) {
       console.log(error);
+
       alert(
-        "Payment failed to start."
+        "Payment failed."
       );
     }
   }
@@ -59,9 +102,10 @@ export default function PayButton() {
   return (
     <button
       onClick={handlePayment}
-      className="rounded-lg bg-green-600 px-5 py-3 text-white hover:bg-green-700"
+      className="rounded-xl bg-green-600 px-6 py-3 font-semibold text-white hover:bg-green-700"
     >
-      Pay ₹499
+      💳 Pay ₹
+      {getServicePrice(service)}
     </button>
   );
 }
