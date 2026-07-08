@@ -97,36 +97,30 @@ export default function PhoneLoginPage() {
         result.user;
 
       // Save user to Prisma
-      const response =
-        await fetch(
-          "/api/auth/phone",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-            body: JSON.stringify({
-              phone:
-                firebaseUser.phoneNumber,
-              name:
-                name ||
-                "Customer",
-            }),
-          }
-        );
+      const response = await fetch(
+  "/api/login-phone",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type":
+        "application/json",
+    },
+    body: JSON.stringify({
+      phone: firebaseUser.phoneNumber,
+    }),
+  }
+);
 
-      const data =
-        await response.json();
+const data = await response.json();
 
-      if (!data.success) {
-        alert(
-          "Failed to create user"
-        );
-        setLoading(false);
-        return;
-      }
-
+if (!data.success) {
+  alert(
+    data.error ||
+      "Please register first."
+  );
+  setLoading(false);
+  return;
+}
       // Create NextAuth session
       const login =
         await signIn("phone", {

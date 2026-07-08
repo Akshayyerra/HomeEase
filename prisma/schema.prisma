@@ -22,6 +22,15 @@ model User {
   // Bookings assigned to worker
   assignedBookings Booking[] @relation("AssignedWorker")
 
+  // Reviews written by customer
+  customerReviews Review[] @relation("CustomerReviews")
+
+  // Reviews received by worker
+  workerReviews Review[] @relation("WorkerReviews")
+
+  // Worker availability (we'll use this later)
+  isOnline Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -50,6 +59,9 @@ model Booking {
   workerId String?
   worker   User?   @relation("AssignedWorker", fields: [workerId], references: [id])
 
+  // One review per booking
+  review Review?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -61,6 +73,24 @@ model Paste {
   maxViews  Int?
   expiresAt DateTime?
   createdAt DateTime  @default(now())
+}
+
+model Review {
+  id String @id @default(cuid())
+
+  rating  Int
+  comment String?
+
+  customerId String
+  workerId   String
+  bookingId  String @unique
+
+  customer User @relation("CustomerReviews", fields: [customerId], references: [id])
+  worker   User @relation("WorkerReviews", fields: [workerId], references: [id])
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+
+  createdAt DateTime @default(now())
 }
 
 enum Role {
