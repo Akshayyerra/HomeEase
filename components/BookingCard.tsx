@@ -2,8 +2,8 @@ import StatusBadge from "@/components/StatusBadge";
 import CancelBookingButton from "@/components/CancelBookingButton";
 import PayButton from "@/components/PayButton";
 import ReviewForm from "@/components/ReviewForm";
-import { Prisma } from "@prisma/client";
 import DateTime from "@/components/DateTime";
+import { Prisma } from "@prisma/client";
 
 type BookingWithReview = Prisma.BookingGetPayload<{
   include: {
@@ -18,6 +18,7 @@ export default function BookingCard({
 }) {
   return (
     <div className="rounded-3xl bg-white p-8 shadow-lg">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-4xl font-bold capitalize">
           🔧 {booking.service}
@@ -28,9 +29,10 @@ export default function BookingCard({
         </span>
       </div>
 
+      {/* Booking Details */}
       <div className="mt-8 space-y-4 text-lg">
         <p>
-            <DateTime date={booking.bookingAt} />
+          <DateTime date={booking.bookingAt} />
         </p>
 
         <p>📍 {booking.address}</p>
@@ -38,6 +40,7 @@ export default function BookingCard({
         <p>📞 {booking.phone}</p>
       </div>
 
+      {/* Status */}
       <div className="mt-8 flex items-center gap-3">
         <span className="text-lg font-semibold">
           Status:
@@ -46,6 +49,7 @@ export default function BookingCard({
         <StatusBadge status={booking.status} />
       </div>
 
+      {/* Payment */}
       {booking.paymentStatus === "PAID" ? (
         <div className="mt-5 flex items-center gap-3">
           <span className="text-lg font-semibold">
@@ -68,6 +72,7 @@ export default function BookingCard({
         </div>
       )}
 
+      {/* Transaction ID */}
       {booking.paymentId && (
         <div className="mt-6 rounded-2xl bg-gray-50 p-5">
           <p className="text-sm text-gray-500">
@@ -80,6 +85,7 @@ export default function BookingCard({
         </div>
       )}
 
+      {/* Pay Button */}
       {booking.status === "CONFIRMED" &&
         booking.paymentStatus !== "PAID" && (
           <div className="mt-6">
@@ -90,6 +96,31 @@ export default function BookingCard({
           </div>
         )}
 
+      {/* Worker Live Location */}
+      {booking.status === "IN_PROGRESS" &&
+        booking.workerLatitude &&
+        booking.workerLongitude && (
+          <div className="mt-6 rounded-2xl bg-blue-50 p-5">
+            <h3 className="text-xl font-bold text-blue-700">
+              🚗 Worker Live Location
+            </h3>
+
+            <p className="mt-3 text-gray-700">
+              Your worker is on the way.
+            </p>
+
+            <a
+              href={`https://www.google.com/maps?q=${booking.workerLatitude},${booking.workerLongitude}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-block rounded-xl bg-blue-600 px-6 py-3 font-semibold text-white hover:bg-blue-700"
+            >
+              📍 Track Worker
+            </a>
+          </div>
+        )}
+
+      {/* Booking Created */}
       <div className="mt-5 text-sm text-gray-500">
         Booking created on{" "}
         {new Date(
@@ -97,7 +128,7 @@ export default function BookingCard({
         ).toLocaleDateString()}
       </div>
 
-      {/* Review Section */}
+      {/* Review */}
       {booking.status === "COMPLETED" && (
         <>
           {booking.review ? (
@@ -106,8 +137,10 @@ export default function BookingCard({
                 ⭐ Your Review
               </h3>
 
-              <div className="mt-2 text-xl">
-                {"⭐".repeat(booking.review.rating)}
+              <div className="mt-2 text-2xl">
+                {"⭐".repeat(
+                  booking.review.rating
+                )}
               </div>
 
               {booking.review.comment && (
@@ -122,6 +155,7 @@ export default function BookingCard({
         </>
       )}
 
+      {/* Cancel */}
       {booking.status !== "COMPLETED" &&
         booking.status !== "CANCELLED" && (
           <div className="mt-8">

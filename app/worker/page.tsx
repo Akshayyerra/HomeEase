@@ -3,6 +3,9 @@ import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import UpdateStatusButton from "@/components/UpdateStatusButton";
 import WorkerLocationTracker from "@/components/WorkerLocationTracker";
+import WorkerAvailabilityToggle from "@/components/WorkerAvailabilityToggle";
+import CashReceivedButton from "@/components/CashReceivedButton";
+import DateTime from "@/components/DateTime";
 import { Prisma } from "@prisma/client";
 
 type BookingWithUser = Prisma.BookingGetPayload<{
@@ -28,23 +31,30 @@ export default async function WorkerPage() {
     redirect("/");
   }
 
-  const bookings = await prisma.booking.findMany({
-    where: {
-      workerId: worker.id,
-    },
-    include: {
-      user: true,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+  const bookings: BookingWithUser[] =
+    await prisma.booking.findMany({
+      where: {
+        workerId: worker.id,
+      },
+      include: {
+        user: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <h1 className="mb-8 text-4xl font-bold">
         Worker Dashboard
       </h1>
+
+      <div className="mb-8">
+        <WorkerAvailabilityToggle
+          initialStatus={worker.isOnline}
+        />
+      </div>
 
       {bookings.length === 0 ? (
         <div className="rounded-xl bg-white p-8 shadow">
@@ -54,152 +64,161 @@ export default async function WorkerPage() {
         </div>
       ) : (
         <div className="space-y-8">
-          {bookings.map(
-            (booking: BookingWithUser) => (
-              <div
-                key={booking.id}
-                className="rounded-2xl bg-white p-8 shadow"
-              >
-                {booking.status !==
-                  "COMPLETED" && (
-                  <WorkerLocationTracker
+          {bookings.map((booking) => (
+            <div
+              key={booking.id}
+              className="rounded-2xl bg-white p-8 shadow"
+            >
+              {/* Live Location */}
+              {booking.status !== "COMPLETED" && (
+                <WorkerLocationTracker
+                  bookingId={booking.id}
+                />
+              )}
+
+              <h2 className="text-3xl font-bold capitalize">
+                🔧 {booking.service}
+              </h2>
+
+              <div className="mt-6 space-y-3 text-lg">
+                <p>👤 {booking.user.name}</p>
+
+                <p>📧 {booking.user.email}</p>
+
+                <p>📞 {booking.phone}</p>
+
+                <p>📍 {booking.address}</p>
+
+                <p>
+                  📅{" "}
+                  <DateTime
+                    date={booking.bookingAt}
+                  />
+                </p>
+
+                <p>
+                  Status:
+                  <span className="ml-2 font-bold text-blue-600">
+                    {booking.status}
+                  </span>
+                </p>
+
+                <p>
+                  💳 Payment:
+                  <span
+                    className={`ml-2 font-bold ${
+                      booking.paymentStatus ===
+                      "PAID"
+                        ? "text-green-600"
+                        : "text-yellow-600"
+                    }`}
+                  >
+                    {booking.paymentStatus}
+                  </span>
+                </p>
+
+                {booking.paymentId && (
+                  <p>
+                    🧾 Payment ID:{" "}
+                    {booking.paymentId}
+                  </p>
+                )}
+              </div>
+
+              {/* Contact Buttons */}
+              <div className="mt-8 flex flex-wrap gap-3">
+                <a
+                  href={`tel:${booking.phone}`}
+                  className="rounded-lg bg-green-600 px-5 py-3 text-white hover:bg-green-700"
+                >
+                  📞 Call Customer
+                </a>
+
+                <a
+                  href={`https://wa.me/91${booking.phone}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-lg bg-green-500 px-5 py-3 text-white hover:bg-green-600"
+                >
+                  💬 WhatsApp
+                </a>
+
+                {booking.latitude &&
+                booking.longitude ? (
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${booking.latitude},${booking.longitude}&travelmode=driving`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-lg bg-blue-600 px-5 py-3 text-white hover:bg-blue-700"
+                  >
+                    🗺 Navigate
+                  </a>
+                ) : (
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                      booking.address
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-lg bg-blue-600 px-5 py-3 text-white hover:bg-blue-700"
+                  >
+                    🗺 Navigate
+                  </a>
+                )}
+              </div>
+
+              {/* Worker Actions */}
+              <div className="mt-8 flex flex-wrap gap-3">
+                {booking.status === "CONFIRMED" && (
+                  <UpdateStatusButton
                     bookingId={booking.id}
+                    status="CONFIRMED"
+                    label="👍 Accept Job"
+                    isWorker={true}
                   />
                 )}
 
-                <h2 className="text-3xl font-bold capitalize">
-                  🔧 {booking.service}
-                </h2>
+                {booking.status === "IN_PROGRESS" && (
+                  <UpdateStatusButton
+                    bookingId={booking.id}
+                    status="IN_PROGRESS"
+                    label="✅ Complete Service"
+                    isWorker={true}
+                  />
+                )}
 
-                <div className="mt-6 space-y-3 text-lg">
-                  <p>👤 {booking.user.name}</p>
-
-                  <p>📧 {booking.user.email}</p>
-
-                  <p>📞 {booking.phone}</p>
-
-                  <p>📍 {booking.address}</p>
-
-                  <p>
-                    📅{" "}
-                    {new Date(
-                      booking.bookingAt
-                    ).toLocaleString()}
-                  </p>
-
-                  <p>
-                    Status:{" "}
-                    <span className="font-bold text-blue-600">
-                      {booking.status}
-                    </span>
-                  </p>
-
-                  {booking.paymentStatus && (
-                    <p>
-                      💳 Payment:{" "}
-                      <span className="font-bold text-green-600">
-                        {booking.paymentStatus}
-                      </span>
-                    </p>
-                  )}
-
-                  {booking.paymentId && (
-                    <p>
-                      🧾 Payment ID:{" "}
-                      {booking.paymentId}
-                    </p>
-                  )}
-                </div>
-
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <a
-                    href={`tel:${booking.phone}`}
-                    className="rounded-lg bg-green-600 px-5 py-3 text-white hover:bg-green-700"
-                  >
-                    📞 Call Customer
-                  </a>
-
-                  <a
-                    href={`https://wa.me/91${booking.phone}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-lg bg-green-500 px-5 py-3 text-white hover:bg-green-600"
-                  >
-                    💬 WhatsApp
-                  </a>
-
-                  {booking.latitude &&
-                  booking.longitude ? (
-                    <a
-                      href={`https://www.google.com/maps/dir/?api=1&destination=${booking.latitude},${booking.longitude}&travelmode=driving`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-lg bg-blue-600 px-5 py-3 text-white hover:bg-blue-700"
-                    >
-                      🗺 Navigate
-                    </a>
-                  ) : (
-                    <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                        booking.address
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-lg bg-blue-600 px-5 py-3 text-white hover:bg-blue-700"
-                    >
-                      🗺 Navigate
-                    </a>
-                  )}
-                </div>
-
-                <div className="mt-6">
-                  {booking.status ===
-                    "CONFIRMED" && (
-                    <UpdateStatusButton
+                {booking.status === "COMPLETED" &&
+                  booking.paymentStatus !== "PAID" && (
+                    <CashReceivedButton
                       bookingId={booking.id}
-                      status="CONFIRMED"
-                      label="👍 Accept Job"
                     />
                   )}
-
-                  {booking.status ===
-                    "IN_PROGRESS" && (
-                    <UpdateStatusButton
-                      bookingId={booking.id}
-                      status="IN_PROGRESS"
-                      label="✅ Complete Service"
-                    />
-                  )}
-                </div>
-
-                <div className="mt-4 text-sm text-gray-500">
-                  <p>
-                    Customer Latitude:{" "}
-                    {booking.latitude ??
-                      "N/A"}
-                  </p>
-
-                  <p>
-                    Customer Longitude:{" "}
-                    {booking.longitude ??
-                      "N/A"}
-                  </p>
-
-                  <p>
-                    Worker Latitude:{" "}
-                    {booking.workerLatitude ??
-                      "N/A"}
-                  </p>
-
-                  <p>
-                    Worker Longitude:{" "}
-                    {booking.workerLongitude ??
-                      "N/A"}
-                  </p>
-                </div>
               </div>
-            )
-          )}
+
+              {/* Coordinates */}
+              <div className="mt-8 rounded-xl bg-gray-100 p-4 text-sm text-gray-600">
+                <p>
+                  Customer Latitude:{" "}
+                  {booking.latitude ?? "N/A"}
+                </p>
+
+                <p>
+                  Customer Longitude:{" "}
+                  {booking.longitude ?? "N/A"}
+                </p>
+
+                <p>
+                  Worker Latitude:{" "}
+                  {booking.workerLatitude ?? "N/A"}
+                </p>
+
+                <p>
+                  Worker Longitude:{" "}
+                  {booking.workerLongitude ?? "N/A"}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
