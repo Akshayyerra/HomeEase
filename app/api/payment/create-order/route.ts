@@ -1,40 +1,68 @@
 import { NextResponse } from "next/server";
-import Razorpay from "razorpay";
+import { auth } from "@/auth";
+import prisma from "@/lib/prisma";
+import razorpay from "@/lib/razorpay";
 
-const razorpay = new Razorpay({
-  key_id:
-    process.env.RAZORPAY_KEY_ID!,
-  key_secret:
-    process.env
-      .RAZORPAY_KEY_SECRET!,
-});
-
-export async function POST(
-  request: Request
-) {
+export async function POST(req: Request) {
   try {
-    const { amount } =
-      await request.json();
+    const session = await auth();
 
-    const order =
-      await razorpay.orders.create({
-        amount: amount * 100,
-        currency: "INR",
-        receipt:
-          "homeease_receipt_" +
-          Date.now(),
-      });
+    if (!session?.user?.email) {
+      return NextResponse.json(
+        {
+          error: "Unauthorized",
+        },
+        {
+          status: 401,
+        }
+      );
+    }
 
-    return NextResponse.json(
-      order
-    );
+    const { bookingId } = await req.json();
+
+    if (!bookingId) {
+      return NextResponse.json(
+        {
+          error: "Booking ID is required",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    const booking = await prisma.booking.findUnique({
+      where: {
+        id: bookingId,
+      },
+    });
+
+    if (!booking) {
+      return NextResponse.json(
+        {
+          error: "Booking not found",
+        },
+        {
+          status: 404,
+        }
+      );
+    }
+
+    console.log("Booking Price:", booking.price);
+
+    const order = await razorpay.orders.create({
+      amount: booking.price * 100,
+      currency: "INR",
+      receipt: `booking_${booking.id}`,
+    });
+
+    return NextResponse.json(order);
   } catch (error) {
-    console.log(error);
+    console.error(error);
 
     return NextResponse.json(
       {
-        error:
-          "Failed to create order",
+        error: "Failed to create order",
       },
       {
         status: 500,

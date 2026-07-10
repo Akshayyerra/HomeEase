@@ -28,7 +28,7 @@ model User {
   // Reviews received by worker
   workerReviews Review[] @relation("WorkerReviews")
 
-  // Worker availability (we'll use this later)
+  // Worker availability
   isOnline Boolean @default(false)
 
   createdAt DateTime @default(now())
@@ -37,7 +37,12 @@ model User {
 
 model Booking {
   id        String   @id @default(cuid())
+
   service   String
+
+  // NEW FIELD
+  price     Int      @default(0)
+
   bookingAt DateTime
   address   String
   phone     String
@@ -54,10 +59,10 @@ model Booking {
   workerLongitude Float?
 
   userId String
-  user   User   @relation("CustomerBookings", fields: [userId], references: [id])
+  user   User @relation("CustomerBookings", fields: [userId], references: [id])
 
   workerId String?
-  worker   User?   @relation("AssignedWorker", fields: [workerId], references: [id])
+  worker   User? @relation("AssignedWorker", fields: [workerId], references: [id])
 
   // One review per booking
   review Review?

@@ -32,12 +32,23 @@ export default function BookingCard({
       {/* Booking Details */}
       <div className="mt-8 space-y-4 text-lg">
         <p>
-          <DateTime date={booking.bookingAt} />
+          📅 <DateTime date={booking.bookingAt} />
         </p>
 
         <p>📍 {booking.address}</p>
 
         <p>📞 {booking.phone}</p>
+
+        {/* NEW PRICE SECTION */}
+        <div className="rounded-2xl bg-green-50 p-5">
+          <p className="text-gray-500">
+            Service Price
+          </p>
+
+          <p className="mt-2 text-4xl font-bold text-green-600">
+            ₹{booking.price}
+          </p>
+        </div>
       </div>
 
       {/* Status */}
@@ -50,27 +61,31 @@ export default function BookingCard({
       </div>
 
       {/* Payment */}
-      {booking.paymentStatus === "PAID" ? (
-        <div className="mt-5 flex items-center gap-3">
-          <span className="text-lg font-semibold">
-            💳 Payment:
-          </span>
+      {/* Payment Options */}
+      {booking.paymentStatus !== "PAID" &&
+        booking.status !== "CANCELLED" && (
+          <div className="mt-6 space-y-4">
+            {/* Online Payment */}
+            <PayButton
+              bookingId={booking.id}
+              service={booking.service}
+            />
 
-          <span className="rounded-full bg-green-100 px-4 py-2 font-bold text-green-700">
-            ✔ Paid
-          </span>
-        </div>
-      ) : (
-        <div className="mt-5 flex items-center gap-3">
-          <span className="text-lg font-semibold">
-            💳 Payment:
-          </span>
+            {/* Cash on Delivery */}
+            <div className="rounded-xl border border-yellow-300 bg-yellow-50 p-4">
+              <h3 className="font-bold text-yellow-800">
+                💵 Cash on Delivery
+              </h3>
 
-          <span className="rounded-full bg-yellow-100 px-4 py-2 font-bold text-yellow-700">
-            Pending
-          </span>
-        </div>
-      )}
+              <p className="mt-2 text-sm text-yellow-700">
+                Prefer paying by cash?
+                Simply pay the worker after the service is completed.
+                Once the worker receives the cash, they will mark the
+                payment as received and your invoice will be generated.
+              </p>
+            </div>
+          </div>
+        )}
 
       {/* Transaction ID */}
       {booking.paymentId && (
@@ -123,10 +138,23 @@ export default function BookingCard({
       {/* Booking Created */}
       <div className="mt-5 text-sm text-gray-500">
         Booking created on{" "}
-        {new Date(
-          booking.createdAt
-        ).toLocaleDateString()}
+        {new Date(booking.createdAt).toLocaleDateString()}
       </div>
+
+      {/* Download Invoice */}
+      {booking.status === "COMPLETED" &&
+        booking.paymentStatus === "PAID" && (
+          <div className="mt-6">
+            <a
+              href={`/api/invoice/${booking.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center rounded-xl bg-indigo-600 px-6 py-3 font-semibold text-white hover:bg-indigo-700"
+            >
+              📄 Download Invoice
+            </a>
+          </div>
+        )}
 
       {/* Review */}
       {booking.status === "COMPLETED" && (
@@ -138,9 +166,7 @@ export default function BookingCard({
               </h3>
 
               <div className="mt-2 text-2xl">
-                {"⭐".repeat(
-                  booking.review.rating
-                )}
+                {"⭐".repeat(booking.review.rating)}
               </div>
 
               {booking.review.comment && (
